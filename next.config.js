@@ -10,7 +10,16 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'neeko-copilot.bytedance.net',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+      },
     ],
+    unoptimized: true,
   },
 }
 

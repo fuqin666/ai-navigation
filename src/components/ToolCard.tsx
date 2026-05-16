@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Users, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
 import type { Tool } from '@/data/tools';
 
 interface ToolCardProps {
@@ -8,15 +11,24 @@ interface ToolCardProps {
 }
 
 export default function ToolCard({ tool }: ToolCardProps) {
+  const [imageError, setImageError] = useState(false);
+  
+  const getAvatarUrl = () => {
+    const hash = tool.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${hash}&background=%236366f1`;
+  };
+
   return (
     <div className="card group hover:-translate-y-1 transition-transform duration-300">
       <div className="flex gap-4">
-        <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+        <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50">
           <Image
-            src={tool.image}
+            src={imageError ? getAvatarUrl() : tool.image}
             alt={tool.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-300"
+            onError={() => setImageError(true)}
+            loading="lazy"
           />
         </div>
         

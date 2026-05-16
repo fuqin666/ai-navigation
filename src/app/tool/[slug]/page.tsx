@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import { tools, categories } from '@/data/tools';
 import { Star, Users, ExternalLink, Tag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+import ToolImage from '@/components/ToolImage';
+import ToolShareButtons from '@/components/ToolShareButtons';
 
 interface ToolPageProps {
   params: Promise<{      
@@ -17,19 +18,59 @@ export async function generateMetadata({ params }: ToolPageProps) {
   if (!tool) {
     return {
       title: 'Tool Not Found',
+      description: 'The tool you are looking for was not found.',
     };
   }
 
+  const currentUrl = `https://ai-tools-hub.com/tool/${slug}`;
+
   return {
-    title: `${tool.name} - AI Tools Hub`,
-    description: tool.description,
+    title: `${tool.name} - AI Tools Hub - Discover the Best AI Tools`,
+    description: `${tool.description} - ${tool.name} is a powerful AI tool in the ${tool.category} category. Try it now!`,
+    keywords: [...tool.tags, tool.category, 'AI', 'AI tools', tool.name].join(', '),
+    authors: [{ name: 'AI Tools Hub' }],
     openGraph: {
-      title: tool.name,
+      title: `${tool.name} - AI Tools Hub`,
+      description: tool.description,
+      url: currentUrl,
+      siteName: 'AI Tools Hub',
+      images: [
+        {
+          url: tool.image,
+          width: 1200,
+          height: 630,
+          alt: tool.name,
+        },
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${tool.name} - AI Tools Hub`,
       description: tool.description,
       images: [tool.image],
+      creator: '@AIToolsHub',
+    },
+    robots: {
+      index: true,
+      follow: true,
+      maxImagePreview: 'large',
     },
   };
 }
+
+const getPricingBadge = (pricing: string) => {
+  switch (pricing) {
+    case 'free':
+      return { label: 'Free', className: 'bg-green-100 text-green-700' };
+    case 'paid':
+      return { label: 'Paid', className: 'bg-red-100 text-red-700' };
+    case 'freemium':
+      return { label: 'Freemium', className: 'bg-blue-100 text-blue-700' };
+    default:
+      return { label: pricing, className: 'bg-gray-100 text-gray-700' };
+  }
+};
 
 export default async function ToolPage({ params }: ToolPageProps) {
   const { slug } = await params;
@@ -40,21 +81,11 @@ export default async function ToolPage({ params }: ToolPageProps) {
   }
 
   const category = categories.find((cat) => cat.name === tool.category);
-
-  const getPricingBadge = (pricing: string) => {
-    switch (pricing) {
-      case 'free':
-        return { label: 'Free', className: 'bg-green-100 text-green-700' };
-      case 'paid':
-        return { label: 'Paid', className: 'bg-red-100 text-red-700' };
-      case 'freemium':
-        return { label: 'Freemium', className: 'bg-blue-100 text-blue-700' };
-      default:
-        return { label: pricing, className: 'bg-gray-100 text-gray-700' };
-    }
-  };
-
   const pricingInfo = getPricingBadge(tool.pricing);
+
+  const similarTools = tools
+    .filter((t) => t.category === tool.category && t.id !== tool.id)
+    .slice(0, 6);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -70,14 +101,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-1/3">
-          <div className="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-square">
-            <Image
-              src={tool.image}
-              alt={tool.name}
-              fill
-              className="object-cover"
-              loading="lazy"
-            />
+          <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 aspect-square">
+            <ToolImage tool={tool} size="large" />
           </div>
         </div>
 
@@ -136,51 +161,48 @@ export default async function ToolPage({ params }: ToolPageProps) {
             </div>
           </div>
 
-          <a
-            href={tool.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-          >
-            Visit Website
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <a
+              href={tool.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            >
+              Visit Website
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            
+            <ToolShareButtons 
+              toolName={tool.name} 
+              toolDescription={tool.description} 
+              slug={slug} 
+            />
+          </div>
         </div>
       </div>
 
       <section className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Similar Tools</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tools
-            .filter((t) => t.category === tool.category && t.id !== tool.id)
-            .slice(0, 6)
-            .map((similarTool) => (
-              <div
-                key={similarTool.id}
-                className="card flex items-center gap-4 cursor-pointer hover:-translate-y-1 transition-transform duration-300"
-                onClick={() => {
-                  window.location.href = `/tool/${similarTool.name.toLowerCase().replace(/\s+/g, '-')}`;
-                }}
-              >
-                <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                  <Image
-                    src={similarTool.image}
-                    alt={similarTool.name}
-                    fill
-                    className="object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {similarTool.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
-                    {similarTool.description}
-                  </p>
-                </div>
+          {similarTools.map((similarTool) => (
+            <Link
+              key={similarTool.id}
+              href={`/tool/${similarTool.name.toLowerCase().replace(/\s+/g, '-')}`}
+              className="card flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300"
+            >
+              <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50">
+                <ToolImage tool={similarTool} size="small" />
               </div>
-            ))}
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  {similarTool.name}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                  {similarTool.description}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </div>
